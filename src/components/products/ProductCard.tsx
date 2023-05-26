@@ -23,7 +23,7 @@ const ProductCard: FC<Props> = ({ product }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}>
       <Card>
-        <Link href="/products/slug" prefetch={false}>
+        <Link href="/product/Slug" prefetch={false}>
           <CardActionArea>
             <CardMedia
               component="img"
