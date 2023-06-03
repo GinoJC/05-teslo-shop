@@ -3,22 +3,22 @@ import { Typography } from '@mui/material';
 import { FullScreenLoading, ShopLayout, ProductList } from 'components';
 import { useProducts } from 'hooks';
 
-const HomePage: NextPage = () => {
-  const { data, isLoading } = useProducts('products');
+const WomenPage: NextPage = () => {
+  const { data, isLoading } = useProducts('products?gender=women');
 
   return (
     <ShopLayout
-      title="Teslo-Shop - Home"
-      pageDescription="Encuentra los mejores productos de Teslo aquí">
+      title="Teslo-Shop - Women"
+      pageDescription="Encuentra los mejores productos para ellas">
       <Typography variant="h1" component="h1">
-        Tienda
+        Mujeres
       </Typography>
       <Typography variant="h2" sx={{ mb: 1 }}>
-        Todos los productos
+        Productos para mujeres
       </Typography>
       {isLoading ? <FullScreenLoading /> : <ProductList products={data} />}
     </ShopLayout>
   );
 };
 
-export default HomePage;
+export default WomenPage;
