@@ -1,20 +1,29 @@
-import { ICartProduct } from 'interfaces';
+import { IAddress, ICartProduct } from 'interfaces';
 import { CartState } from './CartProvider';
 
 type CartActionType =
   | {
-      type: 'LOAD_FROM_COOKIES' | 'UPDATE_PRODUCTS' | 'CHANGE_PRODUCT_QUANTITY' | 'REMOVE_PRODUCT';
+      type:
+        | 'LOAD_CART_FROM_COOKIES'
+        | 'UPDATE_PRODUCTS'
+        | 'CHANGE_PRODUCT_QUANTITY'
+        | 'REMOVE_PRODUCT';
       payload: ICartProduct[];
     }
   | {
       type: 'UPDATE_ORDER_SUMARY';
       payload: { numberOfItems: number; subTotal: number; tax: number; total: number };
-    };
+    }
+  | { type: 'LOAD_ADDRESS_FROM_COOKIES'; payload: IAddress }
+  | { type: 'UPDATE_ADDRESS'; payload: IAddress };
 
 export const cartReducer = (state: CartState, action: CartActionType): CartState => {
   switch (action.type) {
-    case 'LOAD_FROM_COOKIES':
-      return { ...state, cart: action.payload };
+    case 'LOAD_CART_FROM_COOKIES':
+      return { ...state, isLoaded: true, cart: action.payload };
+    case 'LOAD_ADDRESS_FROM_COOKIES':
+    case 'UPDATE_ADDRESS':
+      return { ...state, shippingAddress: action.payload };
     case 'UPDATE_PRODUCTS':
       return { ...state, cart: action.payload };
     case 'CHANGE_PRODUCT_QUANTITY':

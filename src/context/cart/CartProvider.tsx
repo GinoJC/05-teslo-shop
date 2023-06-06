@@ -1,22 +1,26 @@
 import { FC, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
 import { CartContext, cartReducer } from '.';
-import { ICartProduct } from 'interfaces';
+import { IAddress, ICartProduct } from 'interfaces';
 import Cookies from 'js-cookie';
 
 export interface CartState {
+  isLoaded: boolean;
   cart: ICartProduct[];
   numberOfItems: number;
   subTotal: number;
   tax: number;
   total: number;
+  shippingAddress?: IAddress;
 }
 
 export const CART_INITIAL_STATE: CartState = {
+  isLoaded: false,
   cart: [],
   numberOfItems: 0,
   subTotal: 0,
   tax: 0,
   total: 0,
+  shippingAddress: undefined,
 };
 
 export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
@@ -25,7 +29,13 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     const cookieProducts = Cookies.get('cart');
     const products = cookieProducts ? JSON.parse(cookieProducts) : [];
-    dispatch({ type: 'LOAD_FROM_COOKIES', payload: products });
+    dispatch({ type: 'LOAD_CART_FROM_COOKIES', payload: products });
+  }, []);
+
+  useEffect(() => {
+    const cookieAddress = Cookies.get('address');
+    const address = cookieAddress ? JSON.parse(cookieAddress) : undefined;
+    dispatch({ type: 'LOAD_ADDRESS_FROM_COOKIES', payload: address });
   }, []);
 
   useEffect(() => {
@@ -74,7 +84,13 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
     const filteredProducts = state.cart.filter(
       (p) => !(p._id === product._id && p.size === product.size),
     );
+    Cookies.set('cart', JSON.stringify(filteredProducts));
     dispatch({ type: 'REMOVE_PRODUCT', payload: filteredProducts });
+  };
+
+  const updateAddress = (address: IAddress) => {
+    Cookies.set('address', JSON.stringify(address));
+    dispatch({ type: 'UPDATE_ADDRESS', payload: address });
   };
 
   return (
@@ -84,6 +100,7 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
         addProductToCart,
         updateProductQuantity,
         removeCartProduct,
+        updateAddress,
       }}>
       {children}
     </CartContext.Provider>

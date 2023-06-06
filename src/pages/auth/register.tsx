@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { getSession, signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import {
   Box,
@@ -15,7 +17,6 @@ import {
 import { ErrorOutline, Visibility, VisibilityOff } from '@mui/icons-material';
 import { AuthLayout } from 'components';
 import { validations } from 'utils';
-import { tesloApi } from 'api';
 import { useAuthContext } from 'context';
 
 type FormData = {
@@ -28,7 +29,6 @@ const RegisterPage = () => {
   const router = useRouter();
   const { registerUser } = useAuthContext();
   const [showPassword, setShowPassword] = useState(false);
-  const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const {
@@ -38,15 +38,13 @@ const RegisterPage = () => {
   } = useForm<FormData>();
 
   const onRegisterForm = async ({ name, email, password }: FormData) => {
-    setShowError(false);
     const { hasError, message } = await registerUser(name, email, password);
     if (hasError && message) {
       setErrorMessage(message);
-      setShowError(true);
-      setTimeout(() => setShowError(false), 3000);
+      setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
-    router.replace('/');
+    await signIn('credentials', { email, password });
   };
 
   return (
@@ -59,11 +57,11 @@ const RegisterPage = () => {
                 Crear Cuenta
               </Typography>
               <Chip
-                label="El correo ya existe"
+                label={errorMessage}
                 color="error"
                 icon={<ErrorOutline />}
                 className="fadeIn"
-                sx={{ display: showError ? 'flex' : 'none' }}
+                sx={{ display: errorMessage ? 'flex' : 'none' }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -133,7 +131,11 @@ const RegisterPage = () => {
               </Button>
             </Grid>
             <Grid item xs={12} display="flex" justifyContent="end">
-              <Link href="/auth/login" style={{ color: 'black' }}>
+              <Link
+                href={
+                  router.query.p ? `/auth/login?p=${router.query.p?.toString()}` : '/auth/login'
+                }
+                style={{ color: 'black' }}>
                 ¿Ya tienes cuenta?
               </Link>
             </Grid>
@@ -142,6 +144,24 @@ const RegisterPage = () => {
       </form>
     </AuthLayout>
   );
+};
+
+export const getServerSideProps: GetServerSideProps = async ({ req, query }) => {
+  const session = await getSession({ req });
+
+  if (session) {
+    const { p = '/' } = query;
+    return {
+      redirect: {
+        destination: p.toString(),
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 };
 
 export default RegisterPage;

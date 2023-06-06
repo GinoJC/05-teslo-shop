@@ -1,6 +1,8 @@
 import { FC, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
-import Cookies from 'js-cookie';
+import { useRouter } from 'next/router';
+import { useSession, signOut } from 'next-auth/react';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 import { AuthContext, authReducer } from '.';
 import { IUser } from 'interfaces';
 import { tesloApi } from 'api';
@@ -16,20 +18,13 @@ export const AUTH_INITIAL_STATE: AuthState = {
 };
 
 export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
+  const router = useRouter();
+  const { data, status } = useSession();
   const [state, dispatch] = useReducer(authReducer, AUTH_INITIAL_STATE);
 
   useEffect(() => {
-    checkToken();
-  }, []);
-
-  const checkToken = async () => {
-    try {
-      const { data } = await tesloApi.get('/users/validate-token');
-      const { token, user } = data;
-      Cookies.set('token', token);
-      dispatch({ type: 'LOGIN', payload: user });
-    } catch (error) {}
-  };
+    if (status === 'authenticated') dispatch({ type: 'LOGIN', payload: data.user as IUser });
+  }, [status, data]);
 
   const loginUser = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -70,13 +65,18 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     }
   };
 
-  const logoutUser = () => {};
+  const logoutUser = () => {
+    Cookies.remove('cart');
+    Cookies.remove('address');
+    signOut();
+  };
 
   return (
     <AuthContext.Provider
       value={{
         ...state,
         loginUser,
+        logoutUser,
         registerUser,
       }}>
       {children}

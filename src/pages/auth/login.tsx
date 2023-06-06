@@ -1,21 +1,23 @@
+import { useEffect, useState } from 'react';
+import { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { getProviders, getSession, signIn } from 'next-auth/react';
+import { useForm } from 'react-hook-form';
 import {
   Box,
   Button,
   Chip,
+  Divider,
   Grid,
   IconButton,
   InputAdornment,
   TextField,
   Typography,
 } from '@mui/material';
-import { useForm } from 'react-hook-form';
-import { AuthLayout } from 'components';
-import { useState } from 'react';
 import { ErrorOutline, Visibility, VisibilityOff } from '@mui/icons-material';
+import { AuthLayout } from 'components';
 import { validations } from 'utils';
-import { useAuthContext } from 'context';
 
 type FormData = {
   email: string;
@@ -24,9 +26,9 @@ type FormData = {
 
 const LoginPage = () => {
   const router = useRouter();
-  const { loginUser } = useAuthContext();
   const [showPassword, setShowPassword] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [providers, setProviders] = useState<any>({});
 
   const {
     register,
@@ -34,15 +36,17 @@ const LoginPage = () => {
     formState: { errors },
   } = useForm<FormData>();
 
+  useEffect(() => {
+    getProviders().then((prov) => setProviders(prov));
+  }, []);
+
   const onLoginUser = async ({ email, password }: FormData) => {
     setShowError(false);
-    const isValidLogin = await loginUser(email, password);
+    const isValidLogin = await signIn('credentials', { email, password });
     if (!isValidLogin) {
       setShowError(true);
       setTimeout(() => setShowError(false), 3000);
-      return;
     }
-    router.replace('/');
   };
 
   return (
@@ -113,15 +117,56 @@ const LoginPage = () => {
               </Button>
             </Grid>
             <Grid item xs={12} display="flex" justifyContent="end">
-              <Link href="/auth/register" style={{ color: 'black' }}>
+              <Link
+                href={
+                  router.query.p
+                    ? `/auth/register?p=${router.query.p?.toString()}`
+                    : '/auth/register'
+                }
+                style={{ color: 'black' }}>
                 ¿No tienes cuenta?
               </Link>
+            </Grid>
+            <Grid item xs={12} display="flex" flexDirection="column" justifyContent="end">
+              <Divider sx={{ width: '100%', mb: 2 }} />
+              {Object.values(providers).map((provider: any) => {
+                if (provider.id === 'credentials') return null;
+                return (
+                  <Button
+                    key={provider.id}
+                    variant="outlined"
+                    fullWidth
+                    color="primary"
+                    sx={{ mb: 1 }}
+                    onClick={() => signIn(provider.id)}>
+                    {provider.name}
+                  </Button>
+                );
+              })}
             </Grid>
           </Grid>
         </Box>
       </form>
     </AuthLayout>
   );
+};
+
+export const getServerSideProps: GetServerSideProps = async ({ req, query }) => {
+  const session = await getSession({ req });
+
+  if (session) {
+    const { p = '/' } = query;
+    return {
+      redirect: {
+        destination: p.toString(),
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 };
 
 export default LoginPage;
