@@ -1,4 +1,4 @@
-import { IAddress, ICartProduct } from 'interfaces';
+import { IShippingAddress, ICartProduct } from 'interfaces';
 import { CartState } from './CartProvider';
 
 type CartActionType =
@@ -14,8 +14,9 @@ type CartActionType =
       type: 'UPDATE_ORDER_SUMARY';
       payload: { numberOfItems: number; subTotal: number; tax: number; total: number };
     }
-  | { type: 'LOAD_ADDRESS_FROM_COOKIES'; payload: IAddress }
-  | { type: 'UPDATE_ADDRESS'; payload: IAddress };
+  | { type: 'LOAD_ADDRESS_FROM_COOKIES'; payload: IShippingAddress }
+  | { type: 'UPDATE_ADDRESS'; payload: IShippingAddress }
+  | { type: 'ORDER_COMPLETE' };
 
 export const cartReducer = (state: CartState, action: CartActionType): CartState => {
   switch (action.type) {
@@ -32,6 +33,8 @@ export const cartReducer = (state: CartState, action: CartActionType): CartState
       return { ...state, cart: action.payload };
     case 'UPDATE_ORDER_SUMARY':
       return { ...state, ...action.payload };
+    case 'ORDER_COMPLETE':
+      return { ...state, cart: [], numberOfItems: 0, subTotal: 0, tax: 0, total: 0 };
     default:
       return state;
   }

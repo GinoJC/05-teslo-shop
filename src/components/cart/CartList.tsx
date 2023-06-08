@@ -3,13 +3,14 @@ import Link from 'next/link';
 import { Box, Button, CardActionArea, CardMedia, Grid, Typography } from '@mui/material';
 import { ItemCounter } from 'components/ui';
 import { useCartContext } from 'context';
-import { ICartProduct } from 'interfaces';
+import { ICartProduct, IOrderItem } from 'interfaces';
 
 interface Props {
   editable?: boolean;
+  products?: IOrderItem[];
 }
 
-const CartList: FC<Props> = ({ editable = false }) => {
+const CartList: FC<Props> = ({ editable = false, products }) => {
   const { cart, updateProductQuantity, removeCartProduct } = useCartContext();
 
   const onUpdateQuantity = (product: ICartProduct, newQuantity: number) => {
@@ -17,9 +18,11 @@ const CartList: FC<Props> = ({ editable = false }) => {
     updateProductQuantity(product);
   };
 
+  const productsToShow = products || cart;
+
   return (
     <>
-      {cart.map((product) => (
+      {productsToShow.map((product) => (
         <Grid container spacing={2} mb={1} key={`${product.slug}-${product.size}`}>
           <Grid item xs={3}>
             <Link href={`/product/${product.slug}`}>

@@ -1,20 +1,33 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Cookies from 'js-cookie';
-import { Box, Button, Card, CardContent, Divider, Grid, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Divider, Grid, Typography } from '@mui/material';
 import { CartList, OrderSummary, ShopLayout } from 'components';
 import { useCartContext } from 'context';
 import { countries } from 'utils';
 
 const SummaryPage = () => {
   const router = useRouter();
-  const { shippingAddress, numberOfItems } = useCartContext();
+  const { shippingAddress, numberOfItems, createOrder } = useCartContext();
+  const [isPosting, setIsPosting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const country = countries.find(({ code }) => code === shippingAddress?.country)?.name;
 
   useEffect(() => {
     if (!Cookies.get('address')) router.push('/checkout/address');
   }, [router]);
+
+  const onCreateOrder = async () => {
+    setIsPosting(true);
+    const { hasError, message } = await createOrder();
+    if (hasError) {
+      setIsPosting(false);
+      setErrorMessage(message);
+      return;
+    }
+    router.replace(`/orders/${message}`);
+  };
 
   return (
     <ShopLayout title="Resumen de orden" pageDescription="Resumen de la orden">
@@ -57,10 +70,20 @@ const SummaryPage = () => {
                 </Link>
               </Box>
               <OrderSummary />
-              <Box sx={{ mt: 3 }}>
-                <Button color="secondary" className="circular-btn" fullWidth>
+              <Box sx={{ mt: 3 }} display="flex" flexDirection="column">
+                <Button
+                  color="secondary"
+                  className="circular-btn"
+                  fullWidth
+                  onClick={onCreateOrder}
+                  disabled={isPosting}>
                   Confirmar Orden
                 </Button>
+                <Chip
+                  color="error"
+                  label={errorMessage}
+                  sx={{ display: errorMessage ? 'flex' : 'none', mt: 2 }}
+                />
               </Box>
             </CardContent>
           </Card>

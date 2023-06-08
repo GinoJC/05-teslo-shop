@@ -3,9 +3,21 @@ import { Grid, Typography } from '@mui/material';
 import { useCartContext } from 'context';
 import { currency } from 'utils';
 
-const OrderSummary: FC = () => {
-  const { numberOfItems, subTotal, tax, total } = useCartContext();
+interface Props {
+  orderValues?: {
+    numberOfItems: number;
+    subTotal: number;
+    tax: number;
+    total: number;
+  };
+}
+
+const OrderSummary: FC<Props> = ({ orderValues }) => {
+  const cartContext = useCartContext();
   const taxPercent = Number(process.env.NEXT_PUBLIC_TAX_RATE || 0) * 100;
+  const summaryValues = orderValues ? orderValues : cartContext;
+
+  const { numberOfItems, subTotal, tax, total } = summaryValues;
 
   return (
     <Grid container>

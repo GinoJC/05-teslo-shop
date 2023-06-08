@@ -1,5 +1,4 @@
 import { FC, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
-import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -18,7 +17,6 @@ export const AUTH_INITIAL_STATE: AuthState = {
 };
 
 export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
-  const router = useRouter();
   const { data, status } = useSession();
   const [state, dispatch] = useReducer(authReducer, AUTH_INITIAL_STATE);
 

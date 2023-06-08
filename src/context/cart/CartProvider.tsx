@@ -1,7 +1,9 @@
 import { FC, PropsWithChildren, useContext, useEffect, useReducer } from 'react';
 import { CartContext, cartReducer } from '.';
-import { IAddress, ICartProduct } from 'interfaces';
+import { IShippingAddress, ICartProduct, IOrder } from 'interfaces';
 import Cookies from 'js-cookie';
+import { tesloApi } from 'api';
+import axios from 'axios';
 
 export interface CartState {
   isLoaded: boolean;
@@ -10,7 +12,7 @@ export interface CartState {
   subTotal: number;
   tax: number;
   total: number;
-  shippingAddress?: IAddress;
+  shippingAddress?: IShippingAddress;
 }
 
 export const CART_INITIAL_STATE: CartState = {
@@ -88,9 +90,41 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
     dispatch({ type: 'REMOVE_PRODUCT', payload: filteredProducts });
   };
 
-  const updateAddress = (address: IAddress) => {
+  const updateAddress = (address: IShippingAddress) => {
     Cookies.set('address', JSON.stringify(address));
     dispatch({ type: 'UPDATE_ADDRESS', payload: address });
+  };
+
+  const createOrder = async (): Promise<{ hasError: boolean; message: string }> => {
+    if (!state.shippingAddress) throw new Error('No hay  dirección de entrega');
+
+    const body: IOrder = {
+      orderItems: state.cart.map((product) => ({
+        ...product,
+        size: product.size!,
+      })),
+      shippingAddress: state.shippingAddress,
+      paymentResult: '',
+      numberOfItems: state.numberOfItems,
+      subTotal: state.subTotal,
+      tax: state.tax,
+      total: state.total,
+      isPaid: false,
+    };
+
+    try {
+      const { data } = await tesloApi.post('/orders', body);
+      dispatch({ type: 'ORDER_COMPLETE' });
+      return { hasError: false, message: data._id! };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return { hasError: true, message: error.response?.data.message };
+      }
+      return {
+        hasError: true,
+        message: 'Error no controlado, contacte con el administrador',
+      };
+    }
   };
 
   return (
@@ -101,6 +135,7 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
         updateProductQuantity,
         removeCartProduct,
         updateAddress,
+        createOrder,
       }}>
       {children}
     </CartContext.Provider>

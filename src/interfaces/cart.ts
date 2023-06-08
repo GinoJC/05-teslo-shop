@@ -1,4 +1,4 @@
-import { ISize } from './';
+import { IGender, ISize } from './';
 
 export interface ICartProduct {
   _id: string;
@@ -7,17 +7,6 @@ export interface ICartProduct {
   size?: ISize;
   slug: string;
   title: string;
-  gender: 'men' | 'women' | 'kid' | 'unisex';
+  gender: IGender;
   quantity: number;
-}
-
-export interface IAddress {
-  firstName: string;
-  lastName: string;
-  address: string;
-  address2: string;
-  postalCode: string;
-  city: string;
-  country: string;
-  phone: string;
 }

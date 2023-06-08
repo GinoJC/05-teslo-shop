@@ -6,10 +6,10 @@ import { useForm } from 'react-hook-form';
 import { Box, Button, Grid, MenuItem, TextField, Typography } from '@mui/material';
 import { ShopLayout } from 'components';
 import { countries } from 'utils';
-import { IAddress } from 'interfaces';
+import { IShippingAddress } from 'interfaces';
 import { useCartContext } from 'context';
 
-const getAddressFromCookies = (): IAddress => {
+const getAddressFromCookies = (): IShippingAddress => {
   const addressCookie = Cookies.get('address');
   const address = addressCookie ? JSON.parse(addressCookie) : null;
 
@@ -35,7 +35,7 @@ const AddressPage: NextPage = () => {
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<IAddress>({
+  } = useForm<IShippingAddress>({
     defaultValues: getAddressFromCookies(),
   });
 
@@ -44,7 +44,7 @@ const AddressPage: NextPage = () => {
     setCountrySelected(country);
   }, []);
 
-  const onSubmitAddress = (data: IAddress) => {
+  const onSubmitAddress = (data: IShippingAddress) => {
     updateAddress(data);
     router.push('/checkout/summary');
   };

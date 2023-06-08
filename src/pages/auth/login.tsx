@@ -42,10 +42,13 @@ const LoginPage = () => {
 
   const onLoginUser = async ({ email, password }: FormData) => {
     setShowError(false);
-    const isValidLogin = await signIn('credentials', { email, password });
-    if (!isValidLogin) {
+    const isValidLogin = await signIn('credentials', { email, password, redirect: false });
+    if (!isValidLogin?.ok) {
       setShowError(true);
       setTimeout(() => setShowError(false), 3000);
+    } else {
+      const destination = router.query.p?.toString() || '/';
+      router.replace(destination);
     }
   };
 
