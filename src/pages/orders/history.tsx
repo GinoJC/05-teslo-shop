@@ -1,7 +1,7 @@
 import { GetServerSideProps, NextPage } from 'next';
 import { getSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Chip, Grid, Typography } from '@mui/material';
+import { Chip, Grid, Stack, Typography } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { ShopLayout } from 'components';
 import { dbOrders } from 'database';
@@ -63,6 +63,13 @@ const HistoryPage: NextPage<Props> = ({ orders }) => {
             paginationModel={{
               page: 0,
               pageSize: 10,
+            }}
+            components={{
+              NoRowsOverlay: () => (
+                <Stack height="100%" alignItems="center" justifyContent="center">
+                  Sin ordenes
+                </Stack>
+              ),
             }}
           />
         </Grid>

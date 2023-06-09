@@ -1,11 +1,13 @@
 import { GetServerSideProps, NextPage } from 'next';
 import { getSession } from 'next-auth/react';
+import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
 import { Box, Card, CardContent, Chip, Divider, Grid, Typography } from '@mui/material';
 import { CreditCardOutlined, CreditScoreOutlined } from '@mui/icons-material';
 import { CartList, OrderSummary, ShopLayout } from 'components';
 import { dbOrders } from 'database';
 import { IOrder } from 'interfaces';
 import { countries } from 'utils';
+import { tesloApi } from 'api';
 
 interface Props {
   order: IOrder;
@@ -14,8 +16,19 @@ interface Props {
 const OrderPage: NextPage<Props> = ({ order }) => {
   const { _id, isPaid, numberOfItems, shippingAddress, orderItems, subTotal, tax, total } = order;
   const { firstName, lastName, address, address2, city, postalCode, phone } = shippingAddress;
-
   const country = countries.find(({ code }) => code === shippingAddress?.country)?.name;
+
+  initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY || '', { locale: 'es-AR' });
+
+  const onSubmit = async () => {
+    return new Promise((resolve, reject) => {
+      tesloApi
+        .post('/orders/pay', order)
+        .then(({ data }) => resolve(data.body.id))
+        .catch((err) => reject(err));
+    });
+  };
+
   return (
     <ShopLayout title={`Orden ${_id}`} pageDescription="Resumen de la orden">
       <Typography variant="h1" component="h1">
@@ -75,7 +88,12 @@ const OrderPage: NextPage<Props> = ({ order }) => {
                     icon={<CreditScoreOutlined />}
                   />
                 ) : (
-                  <h1>Pagar</h1>
+                  <Wallet
+                    onSubmit={onSubmit}
+                    customization={{
+                      visual: { buttonBackground: 'black' },
+                    }}
+                  />
                 )}
               </Box>
             </CardContent>
@@ -87,7 +105,7 @@ const OrderPage: NextPage<Props> = ({ order }) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, query }) => {
-  const { id = '' } = query;
+  const { id = '', payment_id = '' } = query;
   const session: any = await getSession({ req });
 
   if (!session) {
@@ -98,6 +116,8 @@ export const getServerSideProps: GetServerSideProps = async ({ req, query }) => 
       },
     };
   }
+
+  if (payment_id) await dbOrders.verifyPaidOrder(payment_id.toString(), id.toString());
 
   const order = await dbOrders.getOrderById(id.toString());
 
