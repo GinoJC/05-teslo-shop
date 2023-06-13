@@ -1,13 +1,14 @@
 import { GetServerSideProps, NextPage } from 'next';
-import { getSession } from 'next-auth/react';
-import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
 import { Box, Card, CardContent, Chip, Divider, Grid, Typography } from '@mui/material';
-import { CreditCardOutlined, CreditScoreOutlined } from '@mui/icons-material';
-import { CartList, OrderSummary, ShopLayout } from 'components';
+import {
+  ConfirmationNumberOutlined,
+  CreditCardOutlined,
+  CreditScoreOutlined,
+} from '@mui/icons-material';
+import { AdminLayout, CartList, OrderSummary } from 'components';
 import { dbOrders } from 'database';
 import { IOrder } from 'interfaces';
 import { countries } from 'utils';
-import { tesloApi } from 'api';
 
 interface Props {
   order: IOrder;
@@ -18,22 +19,11 @@ const OrderPage: NextPage<Props> = ({ order }) => {
   const { firstName, lastName, address, address2, city, postalCode, phone } = shippingAddress;
   const country = countries.find(({ code }) => code === shippingAddress?.country)?.name;
 
-  initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY || '', { locale: 'es-AR' });
-
-  const onSubmit = async () => {
-    return new Promise((resolve, reject) => {
-      tesloApi
-        .post('/orders/pay', order)
-        .then(({ data }) => resolve(data.body.id))
-        .catch((err) => reject(err));
-    });
-  };
-
   return (
-    <ShopLayout title={`Orden ${_id}`} pageDescription="Resumen de la orden">
-      <Typography variant="h1" component="h1">
-        Orden: {_id}
-      </Typography>
+    <AdminLayout
+      title="Resumen de la orden"
+      subtitle={`Orden ${_id}`}
+      icon={<ConfirmationNumberOutlined />}>
       {isPaid ? (
         <Chip
           sx={{ my: 2 }}
@@ -88,11 +78,12 @@ const OrderPage: NextPage<Props> = ({ order }) => {
                     icon={<CreditScoreOutlined />}
                   />
                 ) : (
-                  <Wallet
-                    onSubmit={onSubmit}
-                    customization={{
-                      visual: { buttonBackground: 'black' },
-                    }}
+                  <Chip
+                    sx={{ my: 2 }}
+                    label="Pendiente de pago"
+                    variant="outlined"
+                    color="error"
+                    icon={<CreditScoreOutlined />}
                   />
                 )}
               </Box>
@@ -100,37 +91,23 @@ const OrderPage: NextPage<Props> = ({ order }) => {
           </Card>
         </Grid>
       </Grid>
-    </ShopLayout>
+    </AdminLayout>
   );
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ req, query }) => {
-  const { id = '', payment_id = '' } = query;
-  const session: any = await getSession({ req });
-
-  if (!session) {
-    return {
-      redirect: {
-        destination: `/auth/login?p=/orders/${id}`,
-        permanent: false,
-      },
-    };
-  }
-
-  if (payment_id && payment_id !== 'null')
-    await dbOrders.verifyPaidOrder(payment_id.toString(), id.toString());
+  const { id = '' } = query;
 
   const order = await dbOrders.getOrderById(id.toString());
 
-  if (!order || order.user !== session.user.id) {
+  if (!order) {
     return {
       redirect: {
-        destination: '/orders/history',
+        destination: '/admin/orders',
         permanent: false,
       },
     };
   }
-
   return {
     props: { order },
   };

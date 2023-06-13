@@ -19,12 +19,12 @@ const searchProducts = async (req: NextApiRequest, res: NextApiResponse<Data>) =
   if (q.length === 0)
     return res.status(400).json({ message: 'Debe especificar el query de búsqueda' });
 
-  db.connect();
+  await db.connect();
   const products = await Product.find({
     $text: { $search: q.toString().toLowerCase() },
   })
     .select('title images price inStock slug -_id')
     .lean();
-  db.disconnect();
+  await db.disconnect();
   return res.status(200).json(products);
 };

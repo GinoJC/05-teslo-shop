@@ -44,7 +44,7 @@ export const verifyPaidOrder = async (paymentId: string, orderId: string) => {
   const order = await Order.findById(orderId);
 
   if (!order) {
-    db.disconnect();
+    await db.disconnect();
     return {
       hasError: true,
       message: 'Orden inexistente',
@@ -52,7 +52,7 @@ export const verifyPaidOrder = async (paymentId: string, orderId: string) => {
   }
 
   if (order.total !== data.transaction_details.total_paid_amount) {
-    db.disconnect();
+    await db.disconnect();
     return {
       hasError: true,
       message: 'El total de la orden y el monto pagado no coinciden',
