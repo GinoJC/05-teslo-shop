@@ -44,9 +44,9 @@ const payOrder = async (req: NextApiRequest, res: NextApiResponse) => {
       },
       auto_return: 'all',
       back_urls: {
-        success: `localhost:3000/orders/${order._id}`,
-        failure: `localhost:3000/orders/${order._id}`,
-        pending: `localhost:3000/orders/${order._id}`,
+        success: `${process.env.HOST_NAME}/orders/${order._id}`,
+        failure: `${process.env.HOST_NAME}/orders/${order._id}`,
+        pending: `${process.env.HOST_NAME}/orders/${order._id}`,
       },
     };
 

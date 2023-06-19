@@ -1,6 +1,8 @@
 import React, { ChangeEvent, FC, useEffect, useRef, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
+import { enqueueSnackbar } from 'notistack';
 import { Controller, useForm } from 'react-hook-form';
 import { DriveFileRenameOutline, SaveOutlined, UploadOutlined } from '@mui/icons-material';
 import {
@@ -54,6 +56,7 @@ const ProductAdminPage: FC<Props> = ({ product }) => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTagValue, setNewTagValue] = useState('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   const {
@@ -82,8 +85,13 @@ const ProductAdminPage: FC<Props> = ({ product }) => {
   }, [watch, setValue]);
 
   const onSubmit = async (formData: FormData) => {
-    if (formData.images.length < 2) return alert('Minimo 2 imágenes');
+    if (formData.images.length + selectedImages.length < 2) {
+      enqueueSnackbar('Se necesitan al menos 2 imágenes', { variant: 'info' });
+      return;
+    }
     setIsSaving(true);
+    const images = await saveNewFiles();
+    if (images) formData.images = [...formData.images, ...images];
 
     try {
       await tesloApi({
@@ -91,14 +99,12 @@ const ProductAdminPage: FC<Props> = ({ product }) => {
         method: formData._id ? 'PUT' : 'POST',
         data: formData,
       });
-
-      if (!formData._id) {
-        router.replace(`/admin/products/${formData.slug}`);
-      } else {
-        setIsSaving(false);
-      }
+      enqueueSnackbar(formData._id ? 'Producto actualizado' : 'Producto creado');
+      if (!formData._id) router.replace(`/admin/products/${formData.slug}`);
+      setIsSaving(false);
     } catch (error) {
       setIsSaving(false);
+      enqueueSnackbar('Error al guardar los datos', { variant: 'error' });
     }
   };
 
@@ -127,18 +133,30 @@ const ProductAdminPage: FC<Props> = ({ product }) => {
     setValue('tags', updatedTags, { shouldValidate: true });
   };
 
-  const onFilesSelected = async ({ target }: ChangeEvent<HTMLInputElement>) => {
-    if (!target.files || target.files.length === 0) return;
+  const saveNewFiles = async () => {
     try {
-      const formData = new FormData();
-      for (const file of target.files) {
+      const newImages: string[] = [];
+      for (const file of selectedImages) {
+        const formData = new FormData();
         formData.append('file', file);
         const { data } = await tesloApi.post<{ message: string }>('/admin/upload', formData);
         setValue('images', [...getValues('images'), data.message], { shouldValidate: true });
+        newImages.push(data.message);
       }
+      setSelectedImages([]);
+      return newImages;
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const onImagesSelected = async ({ target }: ChangeEvent<HTMLInputElement>) => {
+    if (!target.files || target.files.length === 0) return;
+    const files = [];
+    for (const file of target.files) {
+      files.push(file);
+    }
+    setSelectedImages(files);
   };
 
   const onDeleteImage = (image: string) => {
@@ -147,6 +165,10 @@ const ProductAdminPage: FC<Props> = ({ product }) => {
       getValues('images').filter((img) => img !== image),
       { shouldValidate: true },
     );
+  };
+
+  const deleteNewImage = (file: File) => {
+    setSelectedImages(selectedImages.filter((image) => image !== file));
   };
 
   return (
@@ -184,7 +206,7 @@ const ProductAdminPage: FC<Props> = ({ product }) => {
               variant="filled"
               fullWidth
               multiline
-              rows={5}
+              rows={10}
               sx={{ mb: 1 }}
               {...register('description', {
                 required: 'Este campo es requerido',
@@ -320,7 +342,6 @@ const ProductAdminPage: FC<Props> = ({ product }) => {
             </Box>
             <Divider sx={{ my: 2 }} />
             <Box display="flex" flexDirection="column">
-              <FormLabel sx={{ mb: 1 }}>Imágenes</FormLabel>
               <Button
                 color="secondary"
                 fullWidth
@@ -335,28 +356,72 @@ const ProductAdminPage: FC<Props> = ({ product }) => {
                 multiple
                 accept="image/png, image/gif, image/jpeg"
                 style={{ display: 'none' }}
-                onChange={onFilesSelected}
+                onChange={onImagesSelected}
               />
               <Chip
                 label="Es necesario al 2 imagenes"
                 color="error"
                 variant="outlined"
-                sx={{ display: getValues('images').length < 2 ? 'flex' : 'none', mb: 2 }}
+                sx={{
+                  display: getValues('images').length + selectedImages.length < 2 ? 'flex' : 'none',
+                  mb: 2,
+                }}
               />
-              <Grid container spacing={2}>
-                {getValues('images').map((img) => (
-                  <Grid item xs={4} sm={3} key={img}>
-                    <Card>
-                      <CardMedia component="img" className="fadeIn" image={img} alt={img} />
-                      <CardActions>
-                        <Button fullWidth color="error" onClick={() => onDeleteImage(img)}>
-                          Borrar
-                        </Button>
-                      </CardActions>
-                    </Card>
+              {!!getValues('images').length && (
+                <>
+                  <Grid item>
+                    <FormLabel sx={{ mb: 1 }}>Imágenes existentes</FormLabel>
+                    <Divider sx={{ mb: 1 }} />
                   </Grid>
-                ))}
-              </Grid>
+                  <Grid container spacing={2}>
+                    {getValues('images').map((img) => (
+                      <Grid item xs={4} sm={3} key={img}>
+                        <Card>
+                          <CardMedia component="img" className="fadeIn" image={img} alt={img} />
+                          <CardActions>
+                            <Button fullWidth color="error" onClick={() => onDeleteImage(img)}>
+                              Borrar
+                            </Button>
+                          </CardActions>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </>
+              )}
+              {!!selectedImages.length && (
+                <>
+                  <Grid item mt={2}>
+                    <FormLabel>Nuevas imágenes</FormLabel>
+                    <Divider sx={{ mb: 1 }} />
+                  </Grid>
+                  <Grid container spacing={2}>
+                    {selectedImages.map((img) => (
+                      <Grid item xs={4} sm={3} key={img.name} justifyContent="center">
+                        <Card>
+                          <CardMedia
+                            component={() => (
+                              <Image
+                                style={{ width: '100%', padding: '5px 10px' }}
+                                alt={img.name}
+                                width={120}
+                                height={120}
+                                src={URL.createObjectURL(img)}
+                              />
+                            )}
+                            className="fadeIn"
+                          />
+                          <CardActions>
+                            <Button fullWidth color="error" onClick={() => deleteNewImage(img)}>
+                              Borrar
+                            </Button>
+                          </CardActions>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </>
+              )}
             </Box>
           </Grid>
         </Grid>

@@ -4,9 +4,7 @@ import { v2 as cloudinary } from 'cloudinary';
 
 cloudinary.config(process.env.CLOUDINARY_URL || '');
 
-type Data = {
-  message: string;
-};
+type Data = { message: string };
 
 export const config = {
   api: {
@@ -24,7 +22,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Data>)
 }
 
 const saveFile = async (file: File[]) => {
-  const { secure_url } = await cloudinary.uploader.upload(file[0].filepath);
+  const { secure_url } = await cloudinary.uploader.upload(file[0].filepath, { folder: 'products' });
   return secure_url;
 };
 

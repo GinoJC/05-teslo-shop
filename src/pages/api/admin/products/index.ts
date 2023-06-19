@@ -55,7 +55,7 @@ const updateProducts = async (req: NextApiRequest, res: NextApiResponse<Data>) =
     product.images.forEach(async (image) => {
       if (!images.includes(image)) {
         const [fileId] = image.substring(image.lastIndexOf('/') + 1).split('.');
-        await cloudinary.uploader.destroy(fileId);
+        await cloudinary.uploader.destroy(`products/${fileId}`);
       }
     });
 
