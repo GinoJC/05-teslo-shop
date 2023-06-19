@@ -27,11 +27,7 @@ const CartList: FC<Props> = ({ editable = false, products }) => {
           <Grid item xs={3}>
             <Link href={`/product/${product.slug}`}>
               <CardActionArea>
-                <CardMedia
-                  component="img"
-                  image={`/products/${product.image}`}
-                  sx={{ borderRadius: '5px' }}
-                />
+                <CardMedia component="img" image={product.image} sx={{ borderRadius: '5px' }} />
               </CardActionArea>
             </Link>
           </Grid>

@@ -5,6 +5,7 @@ import { Chip, Grid, Typography } from '@mui/material';
 import { ConfirmationNumberOutlined } from '@mui/icons-material';
 import { AdminLayout, FullScreenLoading } from 'components';
 import { IOrder } from 'interfaces';
+import Link from 'next/link';
 
 const columns: GridColDef[] = [
   { field: 'id', headerName: 'Order ID', width: 250 },
@@ -27,9 +28,9 @@ const columns: GridColDef[] = [
     field: 'check',
     headerName: 'Ver Orden',
     renderCell: ({ row }) => (
-      <a href={`/admin/orders/${row.id}`} target="_blank">
+      <Link href={`/admin/orders/${row.id}`} target="_blank">
         Ver orden
-      </a>
+      </Link>
     ),
   },
   { field: 'createdAt', headerName: 'Fecha Creación', width: 300 },

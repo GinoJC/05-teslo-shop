@@ -1,7 +1,7 @@
 import React, { FC, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Box, Card, CardActionArea, CardMedia, Chip, Grid, Typography } from '@mui/material';
 import { IProduct } from 'interfaces';
-import Link from 'next/link';
 
 interface Props {
   product: IProduct;
@@ -12,7 +12,7 @@ const ProductCard: FC<Props> = ({ product }) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   const productImage = useMemo(
-    () => (isHovered ? `/products/${product.images[1]}` : `/products/${product.images[0]}`),
+    () => (isHovered ? product.images[1] : product.images[0]),
     [isHovered, product.images],
   );
 
