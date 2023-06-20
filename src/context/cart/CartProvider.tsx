@@ -115,6 +115,7 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
     try {
       const { data } = await tesloApi.post('/orders', body);
       dispatch({ type: 'ORDER_COMPLETE' });
+      Cookies.remove('cart');
       return { hasError: false, message: data._id! };
     } catch (error) {
       if (axios.isAxiosError(error)) {
