@@ -27,14 +27,6 @@ const payOrder = async (req: NextApiRequest, res: NextApiResponse) => {
         unit_price: price * (1 + Number(process.env.NEXT_PUBLIC_TAX_RATE)),
         quantity,
       })),
-      payer: {
-        name: order.shippingAddress.firstName,
-        surname: order.shippingAddress.lastName,
-        address: {
-          street_name: order.shippingAddress.address,
-          zip_code: order.shippingAddress.postalCode,
-        },
-      },
       payment_methods: {
         excluded_payment_types: [
           {
