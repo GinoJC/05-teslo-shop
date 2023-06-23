@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import {
   Box,
   Button,
+  Chip,
   Divider,
   Grid,
   IconButton,
@@ -14,10 +15,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { ErrorOutline, Visibility, VisibilityOff } from '@mui/icons-material';
 import { AuthLayout } from 'components';
 import { validations } from 'utils';
-import { enqueueSnackbar } from 'notistack';
 
 type FormData = {
   email: string;
@@ -45,7 +45,6 @@ const LoginPage = () => {
     const isValidLogin = await signIn('credentials', { email, password, redirect: false });
     if (!isValidLogin?.ok) {
       setShowError(true);
-      enqueueSnackbar('No reconocemos ese usuario / contraseña', { variant: 'error' });
       setTimeout(() => setShowError(false), 3000);
     } else {
       const destination = router.query.p?.toString() || '/';
@@ -62,13 +61,13 @@ const LoginPage = () => {
               <Typography variant="h1" component="h1">
                 Iniciar Sesión
               </Typography>
-              {/* <Chip
+              <Chip
                 label="No reconocemos ese usuario / contraseña"
                 color="error"
                 icon={<ErrorOutline />}
                 className="fadeIn"
                 sx={{ display: showError ? 'flex' : 'none' }}
-              /> */}
+              />
             </Grid>
             <Grid item xs={12}>
               <TextField
